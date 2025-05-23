@@ -1,0 +1,551 @@
+---
+title: "Srdnlen CTF 2025 - Crypto Writeups"
+description: "Writeups for Crypto Challenges Solved by Team Infobahn"
+date: 'Jan 01 2025'
+tags: ['writeup','crypto']
+authors: ['ctfguy']
+---
+
+## Confusion
+
+#### Description:
+
+> Looks like our cryptographers had one too many glasses of mirto! Can you sober up their sloppy AES scheme, or will the confusion keep you spinning?
+
+> This is a remote challenge, you can connect to the service with: `nc confusion.challs.srdnlen.it 1338`
+
+#### Challenge File:
+
+```python
+#!/usr/bin/env python3
+
+from Crypto.Cipher import AES
+from Crypto.Util.Padding import pad, unpad
+import os
+
+# Local imports
+FLAG = os.getenv("FLAG", "srdnlen{REDACTED}").encode()
+
+# Server encryption function
+def encrypt(msg, key):
+    pad_msg = pad(msg, 16)
+    blocks = [os.urandom(16)] + [pad_msg[i:i + 16] for i in range(0, len(pad_msg), 16)]
+
+    b = [blocks[0]]
+    for i in range(len(blocks) - 1):
+        tmp = AES.new(key, AES.MODE_ECB).encrypt(blocks[i + 1])
+        b += [bytes(j ^ k for j, k in zip(tmp, blocks[i]))]
+
+    c = [blocks[0]]
+    for i in range(len(blocks) - 1):
+        c += [AES.new(key, AES.MODE_ECB).decrypt(b[i + 1])]
+
+    ct = [blocks[0]]
+    for i in range(len(blocks) - 1):
+        tmp = AES.new(key, AES.MODE_ECB).encrypt(c[i + 1])
+        ct += [bytes(j ^ k for j, k in zip(tmp, c[i]))]
+
+    return b"".join(ct)
+
+
+KEY = os.urandom(32)
+
+print("Let's try to make it confusing")
+flag = encrypt(FLAG, KEY).hex()
+print(f"|\n|    flag = {flag}")
+
+while True:
+    print("|\n|  ~ Want to encrypt something?")
+    msg = bytes.fromhex(input("|\n|    > (hex) "))
+
+    plaintext = pad(msg + FLAG, 16)
+    ciphertext = encrypt(plaintext, KEY)
+
+    print("|\n|  ~ Here is your encryption:")
+    print(f"|\n|   {ciphertext.hex()}")
+```
+
+#### Solution:
+
+The challenge implemented a custom mode of AES. We were given an encryption oracle and the flag is appended to our plaintext. The target is to recover the flag.
+Denote $Enc(M)$ and $Dec(M)$ as the AES-ECB encryption on plaintext $M$. As the key is the same among the encryption and decryption, I'll omit it. Let the plaintext $M$ be the composition of 16-bytes block, i.e.:
+$M = [M_0, M_1, ..., M_n]$, the encryption function $F$ of custom mode can be expressed as follow:
+
+$$
+
+F(M) = [IV, Enc(M_0), \\Enc(M_1) \oplus M_0 \oplus Dec(M_0 \oplus IV), \\ ... \\Enc(M_n) \oplus M_{n-1} \oplus Dec(M_{n-1} \oplus M_{n-2})]
+
+$$
+Since the plaintext is double padded, the last block is always 16 bytes `\x10`. If we know the value of $Enc(M_n)$ and $M_{n-1}$ then we can extract value $Dec(M_{n-1} \oplus M_{n-2})$. After that, we send it to the oracle to obtain $M_{n-1} \oplus M_{n-2}$ since the second block of ciphertext is always $Enc(M_0)$. Then we can recover $M_{n-2}$ by XOR it with known value $M_{n-1}$. Repeat this until we recover the whole flag.
+To obtain $Enc(M_n)$, we just need to send 16 bytes `\x10` as plaintext. $M_{n-1}$ can be known by padding the plaintext to make it has the form `}\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f\x0f` due to the double padding.
+```python
+from pwnlib.tubes.remote import remote
+from Crypto.Cipher import AES
+from Crypto.Util.Padding import pad
+from pwnlib.util.fiddling import xor
+
+def blockify(ct):
+    return [ct[i:i + 16] for i in range(0, len(ct), 16)]
+
+def oracle(pt):
+    io.recvlines(3)
+    io.sendlineafter(b'hex) ', pt.hex().encode())
+    io.recvlines(3)
+    ct = io.recvline().decode().strip().split()[-1]
+    ct = blockify(bytes.fromhex(ct)[16:])
+    return ct
+
+io = remote("confusion.challs.srdnlen.it", 1338)
+io.recvlines(2)
+
+padded_enc = oracle(b'\x10' * 16)[0]
+known = b''
+payload = pad(bytes([ord('}')]), 16) + b'\x00' * 12
+ct0 = oracle(payload)
+expected = ct0[0]
+new_payload = xor(ct0[-1], padded_enc, payload[:16])
+ct1 = oracle(new_payload)[0]
+flag2 = xor(ct1, expected)
+print(f'{flag2 = }')
+
+flag2_enc = oracle(flag2)[0]
+new_payload = xor(ct0[-2], expected, flag2)
+ct1 = oracle(new_payload)[0]
+flag1 = xor(ct1, flag2_enc)
+print(f'{flag1 = }')
+
+
+flag1_enc = oracle(flag1)[0]
+new_payload = xor(ct0[-3], flag2_enc, flag1)
+ct1 = oracle(new_payload)[0]
+flag0 = xor(ct1, flag1_enc)
+print(f'{flag0 = }')
+
+# srdnlen{I_h0p3_th15_Gl4ss_0f_M1rt0_w4rm3d_y0u_3n0ugh}
+```
+
+## Chess
+
+#### Description:
+>Look at this cool encoding, it's made for chess lovers!! Man I love chess...
+
+>This is a remote challenge, you can connect to the service with: nc chess.challs.srdnlen.it 4012
+
+#### Challenge File:
+
+```python
+# main.py
+from src.encode_to_pgn_2bit import encode_to_pgn
+from src.trivia import trivia
+from src.pseudorandom import XorShift128
+from src.decode_from_pgn_2bit import decode_from_pgn, input_and_parse_pgns
+import secrets 
+SIZE = 64
+MAX_STRING = 300
+
+def main_menu():
+    prng = XorShift128(secrets.randbits(SIZE), secrets.randbits(SIZE))
+
+    while True:
+            print("\nMain Menu")
+            print("1. Encode a string to PGN")
+            print("2. Decode a PGN to string")
+            print("3. Play trivia")
+            print("4. Exit")
+            choice = input("Enter your choice (1/2/3/4): ")
+
+            if choice == "1":
+                while True:
+                    string_to_encode = input(f"Enter the string to encode (max {MAX_STRING} characters): ")
+
+                    if len(string_to_encode) <= MAX_STRING:
+                        break
+                    else:
+                        print(f"String too long! Please enter a string with at most {MAX_STRING} characters.")
+
+                results = [ pgn for pgn in encode_to_pgn(string_to_encode, prng)]
+                
+                print("encoded pgns:\n")
+                for result in results:
+                    print(result)
+
+            if choice == "2":
+                list_of_pgns = input_and_parse_pgns()
+
+                print("decoded string:\n")
+                print(decode_from_pgn(list_of_pgns))
+                
+            elif choice == "3":
+                trivia(prng)
+            elif choice == "4":
+                print("Exiting...")
+                break
+            else:
+                print("Invalid choice. Please try again.")
+
+if __name__ == "__main__":
+    main_menu()
+```
+
+#### Solution:
+This challenge is centered around the XorShift128 PRNG. Following the writeup [here](https://tobtu.com/blog/2023/3/breaking-xor-shift-prng/), the PRNG is linear in its LSB, so we can break the PRNG if we can obtain the least significant bits of ~128 samples and then solve the corresponding system of equations.
+
+We get access to PRNG outputs through a chess move selection system which uses the PRNG to generate an output and then reduces the output modulo the number of valid chess moves in a given state. For our purposes, we only require that the number of valid chess moves is even, so that the LSB of the reduced value and the LSB of the raw output is identical.
+
+Given the above, we ask the server to encode a large random string, and then follow along locally with our own chessboard looking at the moves the server picks. If we reach a state where the number of possible moves is even then we can recover the LSB of a PRNG output from the server's choice. Once we have enough samples, we can solve the system to recover the PRNG seeds, and from there predict the trivia game.
+
+```python
+#!/usr/bin/env python3
+import secrets
+from src.pseudorandom import XorShift128 as XorShift128Real
+from sage.all import *
+from pwn import *
+from Crypto.Util.number import bytes_to_long
+import chess.pgn
+from chess import Board, pgn
+from src.trivia import players
+
+
+def shift_left(var, n):
+    return (var + [0] * n)[-64:]
+
+
+def shift_right(var, n):
+    return ([0] * n + var)[:64]
+
+
+def xor(left, right):
+    return [x + y for x, y in zip(left, right)]
+
+
+def xorshift128(state0, state1):
+    s1 = state0
+    s0 = state1
+    state0 = s0
+
+    s1 = xor(s1, shift_left(s1, 23))
+
+    s1 = xor(s1, shift_right(s1, 17))
+
+    s1 = xor(s1, s0)
+
+    s1 = xor(s1, shift_right(s0, 26))
+    state1 = s1
+    return state0, state1
+
+
+class XorShift128:
+
+    def __init__(self, state0, state1):
+        self.state0 = state0
+        self.state1 = state1
+
+    def next(self):
+        self.state0, self.state1 = xorshift128(self.state0, self.state1)
+        return self.state0[-1] + self.state1[-1]
+
+
+R = PolynomialRing(GF(2), [f"x_{i}" for i in range(64)] + [f"y_{i}" for i in range(64)])
+
+
+def break_prng(outputs):
+    state0, state1 = list(R.gens()[:64]), list(R.gens()[64:])
+    prng = XorShift128(state0, state1)
+
+    eqs = []
+    for output, mod in outputs:
+        if mod % 2 == 0:
+            eqs.append(prng.next() - output)
+        else:
+            prng.next()
+        if len(eqs) == 140:
+            break
+
+    A, mons = Sequence(eqs).coefficients_monomials()
+    A, b = A[:, :-1], vector(-A[:, -1])
+    assert A.rank() == 128
+    x = A.solve_right(b)
+
+    left = int("".join(map(str, x[:64])), 2)
+    right = int("".join(map(str, x[64:])), 2)
+
+    return left, right
+
+
+def encode(conn, string):
+    conn.sendlineafter(b"Enter your choice (1/2/3/4): ", b"1")
+    conn.sendlineafter(b"characters): ", string.encode())
+    conn.recvuntil(b"encoded pgns:\n\n")
+    encoded_pgns = []
+    data = conn.recvuntil(b"Invalid choice", drop=True)
+    pgns = data.decode().split('[Event "?"]')
+    out = []
+    for pgn in pgns:
+        if pgn:
+            out.append(chess.pgn.read_game(io.StringIO(pgn)))
+    return out
+
+
+def string_to_bits(s):
+    binary_string = bin(bytes_to_long(s.encode()))[2:]
+    padding_length = (8 - len(binary_string) % 8) % 8
+    padded_binary_string = binary_string.zfill(len(binary_string) + padding_length)
+    return padded_binary_string
+
+
+dic_tile_to_bits = {
+    f"{chr(col + ord('a'))}{8 - row}": f"{row % 2}{col % 2}"
+    for row in range(8)
+    for col in range(8)
+}
+
+dic_bits_to_tile = defaultdict(list)
+for k, v in dic_tile_to_bits.items():
+    dic_bits_to_tile[v].append(k)
+dic_bits_to_tile = dict(dic_bits_to_tile)
+
+
+def iterate_moves(pgns):
+    for pgn in pgns:
+        for move in pgn.mainline_moves():
+            yield move.uci()
+
+
+def solve():
+    # conn = process(["python", "main.py"])
+    conn = connect("chess.challs.srdnlen.it", 4012)
+    msg = "".join(random.choices(string.ascii_letters, k=300))
+    pgns = encode(conn, msg)
+
+    bits_to_encode = string_to_bits(msg)
+    chess_board = Board()
+    moves = iterate_moves(pgns)
+    prng_outputs = []
+    for i in range(len(bits_to_encode) // 2):
+        current_2bits = bits_to_encode[i * 2 : i * 2 + 2]
+
+        legal_moves = list(str(k) for k in chess_board.generate_legal_moves())
+        possible_moves = dic_bits_to_tile[current_2bits]
+
+        legal_possible_moves = [
+            legal_move
+            for legal_move in legal_moves
+            if legal_move[2:4] in possible_moves
+        ]
+        if not legal_possible_moves:
+            chess_board = Board()
+
+            legal_moves = list(str(k) for k in chess_board.generate_legal_moves())
+            possible_moves = dic_bits_to_tile[current_2bits]
+            legal_possible_moves = [
+                legal_move
+                for legal_move in legal_moves
+                if legal_move[2:4] in possible_moves
+            ]
+
+            mod = len(legal_possible_moves)
+            chosen_move = next(moves)
+            chess_board.push(chess.Move.from_uci(chosen_move))
+            prng_outputs.append((legal_possible_moves.index(chosen_move), mod))
+        else:
+            mod = len(legal_possible_moves)
+            chosen_move = next(moves)
+            prng_outputs.append((legal_possible_moves.index(chosen_move), mod))
+            chess_board.push(chess.Move.from_uci(chosen_move))
+
+            if chess_board.is_insufficient_material() or chess_board.can_claim_draw():
+                chess_board = Board()
+    state0, state1 = break_prng(prng_outputs)
+    prng = XorShift128Real(state0, state1)
+
+    for _ in range(len(list(iterate_moves(pgns)))):
+        prng.next()
+
+    conn.sendlineafter(b"Enter your choice (1/2/3/4): ", b"3")
+    for _ in range(50):
+        conn.sendlineafter(
+            "Which chess player am I thinking of?", prng.choice(players).encode()
+        )
+    conn.recvall()
+
+```
+
+
+## Based sbox
+
+#### Description:
+
+>ChatGPT cooked a story for us:
+
+> Once upon a time, after linear and differential cryptanalysis had revolutionized the cryptographic landscape, and before Rijndael was selected as the Advanced Encryption Standard (AES), the field of cryptography was in a unique state of flux. New cryptanalytic methods exposed vulnerabilities in many established ciphers, casting doubt on the long-term security of systems once thought to be invulnerable. In response, the U.S. National Institute of Standards and Technology (NIST) launched a competition to find a successor to the aging DES. In 2000, Rijndael was chosen, setting a new standard for secure encryption. But even as AES became widely adopted, new challenges, like quantum computing, loomed on the horizon.
+
+>This is a remote challenge, you can connect to the service with: `nc basedsbox.challs.srdnlen.it 46173`
+
+#### Challenge File:
+
+The challenge files can be found here: https://github.com/srdnlen/srdnlenctf-2025_public/tree/main/crypto_Based-sbox/src
+
+#### Solution: 
+
+We are given 4 minutes to perform a key recovery attack on a 7 round Feistel cipher. The round function is an sbox which performs modular inversion followed by an addition in the field GF(2^64). This sbox is vulnerable to an [interpolation attack](https://en.wikipedia.org/wiki/Interpolation_attack). 
+
+By reimplementing the cipher symbolically, we can obtain an equation for the ciphertext as a rational function of the plaintext, with unknown key-dependent coefficients. Given enough plaintext/ciphertext pairs, we can interpolate this rational function and solve the linear system for the coefficients/round keys.
+
+Unfortunately the number of unknowns gets too large for the amount of samples we have if we try to express the full action of the cipher symbolically, so we can alter the attack by using a meet in the middle approach to reduce the number of variables. 
+
+Using a meet in the middle approach we get a system of equations with 136 variables (linearised) and 46 equations. We can then run a Groebner basis algorithm to solve for the unknowns.
+```python
+#!/usr/bin/env python3
+
+from sage.all import *
+from pwn import *
+from functools import reduce
+
+x = GF(2)["x"].gen()
+K = GF(2**64, "y", modulus=1 + x + x**3 + x**4 + x**64)
+e = -1
+a1, a2 = K.from_integer(0x01D_5B), K.from_integer(0x_15_BA5ED)
+
+sbox = lambda x: (K.from_integer(x) ** e + a1 + a2).to_integer()
+sbox_sym = lambda x: x**e + a1 + a2
+story = (  # ChatGPT cooked a story for us
+    "Once upon a time, after linear and differential cryptanalysis had revolutionized the cryptographic landscape, "
+    "and before Rijndael was selected as the Advanced Encryption Standard (AES), the field of cryptography was in a unique state of flux. "
+    "New cryptanalytic methods exposed vulnerabilities in many established ciphers, casting doubt on the long-term security of systems "
+    "once thought to be invulnerable. In response, the U.S. National Institute of Standards and Technology (NIST) "
+    "launched a competition to find a successor to the aging DES. In 2000, Rijndael was chosen, setting a new standard for secure encryption. "
+    "But even as AES became widely adopted, new challenges, like quantum computing, loomed on the horizon."
+).encode()
+
+
+class Feistel:
+    def __init__(self, key, rounds=10, block_size=16):
+        assert block_size % 2 == 0
+        self._rounds = rounds
+        self._block_size = block_size
+        self._round_keys = key
+
+    def _f(self, l, r, key):
+        return l + sbox_sym(r + key)
+
+    def _encrypt_block(self, pt, round_num=6):
+        l, r = pt
+        for i in range(self._rounds):
+            l, r = r, self._f(l, r, self._round_keys[i])
+            if i == round_num:
+                break
+        ct = [l, r]
+        return ct
+
+    def _decrypt_block(self, ct, round_num=6):
+        l, r = ct
+        for i in reversed(range(self._rounds)):
+            l, r = self._f(r, l, self._round_keys[i]), l
+            if i == round_num:
+                break
+        pt = [l, r]
+        return pt
+
+    def encrypt(self, pt, iv):
+        ct = [K.from_integer(iv)]
+        for i in range(0, len(pt)):
+            ct.append(self._encrypt_block(pt[i] + ct[-1:]))
+        return ct
+
+    def decrypt(self, ct):
+        pt = []
+        for i in range(0, len(ct) - 1):
+            pt.append(self._decrypt_block(ct[i + 1]) + ct[i])
+        return pt
+
+
+def get_ciphertext(conn):
+    round_keys = []
+    ct = bytes.fromhex(conn.recvline().decode())
+    return round_keys, ct
+
+
+def pad(m: bytes, n: int) -> bytes:
+    x = n - len(m) % n
+    return m + bytes([x] * x)
+
+
+def undo_cbc(ct):
+    pt = pad(story, 16)
+    pt_out = []
+    ct_out = []
+    for i in range(0, len(pt), 16):
+        pt_block = xor(pt[i : i + 16], ct[i : i + 16])
+        ct_block = ct[i + 16 : i + 32]
+
+        pt_l, pt_r = pt_block[:8], pt_block[8:]
+        ct_l, ct_r = ct_block[:8], ct_block[8:]
+        pt_block = (
+            K.from_integer(int.from_bytes(pt_l)),
+            K.from_integer(int.from_bytes(pt_r)),
+        )
+        ct_block = (
+            K.from_integer(int.from_bytes(ct_l)),
+            K.from_integer(int.from_bytes(ct_r)),
+        )
+
+        pt_out.append(pt_block)
+        ct_out.append(ct_block)
+    return pt_out, ct_out
+
+
+def solve():
+    P = PolynomialRing(K, 7, [f"rk_{i}" for i in range(7)])
+    key = P.gens()
+    P = PolynomialRing(P, 4, ["pt_l", "pt_r", "ct_l", "ct_r"])
+    pt_l, pt_r, ct_l, ct_r = P.gens()
+
+    cipher = Feistel(key, rounds=7, block_size=16)
+    pt = [pt_l, pt_r]
+    ct = [ct_l, ct_r]
+    l_forwards, r_forwards = cipher._encrypt_block(pt, round_num=2)
+    l_backwards, r_backwards = cipher._decrypt_block(ct, round_num=3)
+
+    conn = connect("basedsbox.challs.srdnlen.it", 46173)
+    round_keys, ct = get_ciphertext(conn)
+
+    pt_blocks, ct_blocks = undo_cbc(ct)
+
+    poly_left = (l_forwards - l_backwards).numerator()
+    poly_right = (r_forwards - r_backwards).numerator()
+    eqs = []
+    eqs_left = []
+    for pt_block, ct_block in zip(pt_blocks, ct_blocks):
+        pt_l, pt_r = pt_block
+        ct_l, ct_r = ct_block
+
+        eqs.append(poly_right(pt_l, pt_r, ct_l, ct_r))
+        eqs_left.append(poly_left(pt_l, pt_r, ct_l, ct_r))
+    R = eqs[0].parent()
+    I = R.ideal(eqs)
+    set_verbose(10)
+    G = I.groebner_basis()
+
+    solutions = {}
+    for g in G:
+        assert g.degree() == 1
+        mon = g.monomials()[0]
+        sol = g.constant_coefficient()
+        solutions[mon] = sol
+    other = eqs_left[0].subs(solutions)
+    assert other.degree() == 1
+    mon = other.monomials()[0]
+    sol = other.univariate_polynomial().roots()[0][0]
+    solutions[mon] = sol
+
+    round_keys_solved = [
+        int("".join(map(str, solutions[mon].list()))[::-1], 2).to_bytes(8, "big")
+        for mon in R.gens()
+    ]
+
+    key = xor(reduce(xor, round_keys_solved))
+
+    conn.sendline(key.hex().encode())
+    conn.recvall()
+
+```

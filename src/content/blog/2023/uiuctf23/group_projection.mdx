@@ -128,15 +128,15 @@ So this can be used now to decrypt the cipher text given by the code.
 When `k = 0`
 
 $$ 
-\begin{aligned}
+
 \mathrm Bk = B^0\ \bmod\ p\ =\ 1\ \bmod\ p\ =\ 1  
-\end{aligned}
+
 $$
 
 $$ 
-\begin{aligned}
+
 \implies \mathrm S = 1^a\ \bmod\ p\ =\ 1\ \bmod\ p\ =\ 1  
-\end{aligned}
+
 $$
 
 **NOTE:**
@@ -149,15 +149,15 @@ By Fermat’s Little Theorem if `p` is a prime number and `a` is an integer not 
 So by substituting `k = p-1`
 
 $$ 
-\begin{aligned}
+
 \mathrm Bk = B^{(p-1)}\ \bmod\ p  
-\end{aligned}
+
 $$
 
 $$ 
-\begin{aligned}
+
 \mathrm S = \big(B^{(p-1)}\big)^a\ \bmod\ p\ =\ 1\ \bmod\ p\ =\ 1 
-\end{aligned}
+
 $$
 
 
@@ -313,15 +313,15 @@ By picking $\mathrm{k = (p-1)/w}$, the secret value `S` will be confined to the 
 
 To see why this is true, let’s consider an arbitrary element `x` in $\mathbb{Z/p\mathbb Z^*}$ . By Fermat’s Little Theorem, we know that
 $$
-\begin{aligned}
+
 x^{(p-1)} = 1 (\bmod\ p)
-\end{aligned}
+
 $$
 
 $$
-\begin{aligned}
+
 \implies \mathrm(x^{((p-1)/w)})^{w} = x^{(p-1)} = 1 (\bmod\ p) 
-\end{aligned}
+
 $$ 
 
 In other words, raising any element of the group to the power of `(p-1)/w` will map it to an element of `Gw`
@@ -436,7 +436,7 @@ c = 5614285933234928579813206915174147905155599175501429976949786286882318420184
 
 
 
-<br>
+</br>
 
 
 
