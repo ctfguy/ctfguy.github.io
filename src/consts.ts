@@ -1,48 +1,27 @@
 import type { IconMap, SocialLink, Site } from '@/types'
 
 export const SITE: Site = {
-  title: 'astro-erudite',
+  title: "ctfguy's blog",
   description:
-    'astro-erudite is a opinionated, unstyled blogging template—built with Astro, Tailwind, and shadcn/ui.',
-  href: 'https://astro-erudite.vercel.app',
-  author: 'jktrn',
+    'hi this is my personal website / blog. i write about computers and other stuff.',
+  href: 'https://ctfguy.github.io/',
+  author: 'ctfguy',
   locale: 'en-US',
   featuredPostCount: 2,
   postsPerPage: 3,
 }
 
 export const NAV_LINKS: SocialLink[] = [
-  {
-    href: '/blog',
-    label: 'blog',
-  },
-  {
-    href: '/authors',
-    label: 'authors',
-  },
-  {
-    href: '/about',
-    label: 'about',
-  },
+  { href: '/blog', label: 'blog' },
+  { href: '/about', label: 'about' },
+  { href: '/tags', label: 'tags' },
 ]
 
 export const SOCIAL_LINKS: SocialLink[] = [
-  {
-    href: 'https://github.com/jktrn',
-    label: 'GitHub',
-  },
-  {
-    href: 'https://twitter.com/enscry',
-    label: 'Twitter',
-  },
-  {
-    href: 'mailto:jason@enscribe.dev',
-    label: 'Email',
-  },
-  {
-    href: '/rss.xml',
-    label: 'RSS',
-  },
+  { href: 'https://github.com/ctfguy', label: 'GitHub' },
+  { href: 'https://x.com/iitz_ctfguy', label: 'Twitter' },
+  { href: 'iitzctfguy@outlook.com', label: 'Email' },
+  { href: '/rss.xml', label: 'RSS' },
 ]
 
 export const ICON_MAP: IconMap = {

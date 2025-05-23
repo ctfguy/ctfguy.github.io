@@ -36,12 +36,12 @@ const MobileMenu = () => {
         }}
       >
         <Button
-          variant="ghost"
+          variant="outline"
           size="icon"
-          className="size-8 sm:hidden"
+          className="md:hidden"
           title="Menu"
         >
-          <Menu className="size-5" />
+          <Menu className="h-5 w-5" />
           <span className="sr-only">Toggle menu</span>
         </Button>
       </DropdownMenuTrigger>

@@ -2,35 +2,34 @@
 
 @layer components {
   .prose {
-    @apply text-foreground text-base leading-7 [&>link[rel="stylesheet"]+*]:mt-0!;
+    @apply text-foreground text-base leading-7;
 
     p {
       @apply text-foreground/80 my-5 not-first:mt-5;
     }
 
-    /* Don't use an <h1> in your posts, one is already generated in blog/[...id].astro */
     h1 {
-      @apply text-foreground mt-0 mb-6 scroll-mt-32 text-4xl font-medium xl:scroll-mt-20;
+      @apply text-foreground mt-0 mb-6 scroll-m-20 text-4xl leading-5 font-medium;
     }
 
     h2 {
-      @apply text-foreground mt-8 mb-4 scroll-mt-32 text-2xl font-medium xl:scroll-mt-20;
+      @apply text-foreground mt-8 mb-4 scroll-m-20 text-2xl leading-5 font-medium;
     }
 
     h3 {
-      @apply text-foreground mt-6 mb-4 scroll-mt-32 text-xl font-medium xl:scroll-mt-20;
+      @apply text-foreground mt-6 mb-4 scroll-m-20 text-xl leading-6 font-medium;
     }
 
     h4 {
-      @apply text-foreground mt-6 mb-3 scroll-mt-32 text-lg font-medium xl:scroll-mt-20;
+      @apply text-foreground mt-6 mb-3 scroll-m-20 text-lg leading-6 font-medium;
     }
 
     h5 {
-      @apply text-foreground mt-5 mb-3 scroll-mt-32 font-medium xl:scroll-mt-20;
+      @apply text-foreground mt-5 mb-3 scroll-m-20 leading-6 font-medium;
     }
 
     h6 {
-      @apply text-foreground mt-5 mb-3 scroll-mt-32 font-medium xl:scroll-mt-20;
+      @apply text-foreground mt-5 mb-3 scroll-m-20 leading-6 font-medium;
     }
 
     a {

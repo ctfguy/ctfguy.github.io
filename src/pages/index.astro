@@ -1,8 +1,10 @@
 ---
-import BlogCard from '@/components/BlogCard.astro'
-import Link from '@/components/Link.astro'
 import PageHead from '@/components/PageHead.astro'
+import BlogCard from '@/components/BlogCard.astro'
+import Container from '@/components/Container.astro'
+import Link from '@/components/Link.astro'
 import { buttonVariants } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { SITE } from '@/consts'
 import Layout from '@/layouts/Layout.astro'
 import { getRecentPosts } from '@/lib/data-utils'
@@ -10,78 +12,68 @@ import { getRecentPosts } from '@/lib/data-utils'
 const blog = await getRecentPosts(SITE.featuredPostCount)
 ---
 
-<Layout>
-  <PageHead slot="head" title="Home" />
-  <section>
-    <div class="rounded-lg border">
-      <div class="flex flex-col space-y-1.5 p-6">
-        <h3 class="text-3xl leading-none font-medium">er·u·dite</h3>
-        <p class="text-muted-foreground text-sm">
-          /ˈer(y)əˌdīt/ &bull; <span class="font-medium">adjective</span>
-        </p>
-      </div>
-      <div class="p-6 pt-0">
-        <p class="text-muted-foreground mb-2 text-sm">
-          astro-erudite is an opinionated, unstyled static blogging template
-          built with <Link
-            href="https://astro.build"
-            class="text-foreground"
-            external
-            underline>Astro</Link
-          >, <Link
-            href="https://tailwindcss.com"
-            class="text-foreground"
-            external
-            underline>Tailwind</Link
-          >, and <Link
-            href="https://ui.shadcn.com"
-            class="text-foreground"
-            external
-            underline>shadcn/ui</Link
-          >. Extraordinarily loosely based on the <Link
-            href="https://astro-micro.vercel.app/"
-            class="text-foreground"
-            external
-            underline>Astro Micro</Link
-          > theme.
-        </p>
-        <p class="text-muted-foreground text-sm">
-          To use this template, check out the <Link
-            href="https://github.com/jktrn/astro-erudite"
-            class="text-foreground"
-            underline
-            external>GitHub</Link
-          > repository. To learn more about why this template exists, read this blog
-          post: <Link
-            href="/blog/the-state-of-static-blogs"
-            class="text-foreground"
-            underline>The State of Static Blogs in 2024</Link
-          >.
-        </p>
-      </div>
-    </div>
-  </section>
-  <section class="flex flex-col gap-y-4">
-    <h2 class="text-2xl font-medium">Latest posts</h2>
-    <ul class="flex flex-col gap-y-4">
-      {
-        blog.map((post) => (
-          <li>
-            <BlogCard entry={post} />
-          </li>
-        ))
-      }
-    </ul>
-    <div class="flex justify-center">
-      <Link
-        href="/blog"
-        class={buttonVariants({ variant: 'ghost' }) + ' group'}
-      >
-        See all posts <span
-          class="ml-1.5 transition-transform group-hover:translate-x-1"
-          >&rarr;</span
-        >
-      </Link>
-    </div>
-  </section>
+<Layout title="Home" description={SITE.description}>
+    <PageHead slot="head" title="Home" />
+    <Container class="flex flex-col gap-y-6">
+        <section>
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-3xl">Hi! I'm ctfguy</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p class="mb-2 text-sm">
+                        Welcome to my official website and blog. This site hosts
+                        my thoughts, writeups for various CTFs, and other
+                        miscellaneous content. Feel free to look around!
+                    </p>
+                    <p class="mb-2 text-sm text-muted-foreground">
+                        This site is based off the <Link
+                            href="https://github.com/jktrn/astro-erudite"
+                            class="text-foreground"
+                            external
+                            underline>astro-erudite</Link
+                        > template from my great friend <Link
+                            href="https://enscribe.dev/"
+                            class="text-foreground"
+                            external
+                            underline>enscribe</Link
+                        >. It's built with <Link
+                            href="https://astro.build"
+                            class="text-foreground"
+                            external
+                            underline>Astro</Link
+                        > and <Link
+                            href="https://tailwindcss.com"
+                            class="text-foreground"
+                            external
+                            underline>Tailwind CSS</Link
+                        >.
+                    </p>
+                </CardContent>
+            </Card>
+            <section class="flex flex-col gap-y-4 mt-4">
+                <h2 class="text-2xl font-bold">Latest posts</h2>
+                <ul class="not-prose flex flex-col gap-y-4">
+                    {
+                        blog.map((post) => (
+                            <li>
+                                <BlogCard entry={post} />
+                            </li>
+                        ))
+                    }
+                </ul>
+                <div class="flex justify-center">
+                    <Link
+                        href="/blog"
+                        class={buttonVariants({ variant: 'ghost' }) + ' group'}
+                    >
+                        See all posts <span
+                            class="ml-1.5 transition-transform group-hover:translate-x-1"
+                            >&rarr;</span
+                        >
+                    </Link>
+                </div>
+            </section>
+        </section>
+    </Container>
 </Layout>
