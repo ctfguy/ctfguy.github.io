@@ -1,5 +1,5 @@
 ---
-title: "Crypto/Group Project(ion) [UIUCTF 2023]"
+title: "UIUCTF 2023 - Group Project/ion"
 description: "Small Subgroup Confinement attack"
 date: 'Nov 17 2023'
 tags: ['writeup', 'uiuctf23', 'crypto']

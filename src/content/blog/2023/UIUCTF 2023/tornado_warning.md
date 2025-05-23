@@ -1,5 +1,5 @@
 ---
-title: "Misc/Tornado Warning [UIUCTF 2023]"
+title: "UIUCTF 2023 - Tornado Warning"
 description: "Writeups for Misc Challenges from UIUCTF 2023"
 date: 'Nov 17 2023'
 tags: ['writeup', 'uiuctf23', 'misc']

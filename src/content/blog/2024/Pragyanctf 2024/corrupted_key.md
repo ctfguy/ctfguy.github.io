@@ -1,5 +1,5 @@
 ---
-title: "Crypto/Corrupted_key [Pragyan 2024]"
+title: "Pragyan 2024 - Corrupted_key"
 description: "RSA private key recovery with partial information"
 date: 'Feb 21 2024'
 tags: ['writeup','crypto']
