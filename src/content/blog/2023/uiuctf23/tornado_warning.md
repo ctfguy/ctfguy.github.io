@@ -20,11 +20,11 @@ authors: ['ctfguy']
 | --- | --- | --- |
 |Misc | 117 | Pomona|
   
-<br>
+
 
 <details>
     <summary>Hint 0 (Click to Show/Hide)</summary>
-<br>
+
 The header is encoded with Specific Area Message Encoding.
 
 </details>
@@ -32,11 +32,11 @@ The header is encoded with Specific Area Message Encoding.
 
 <details>
     <summary>Hint 1 (Click to Show/Hide)</summary>
-<br>
+
 The three buzzes are supposed to be identical, but in this challenge, they are different due to errors.
 </details>
 
-<br>
+
 
 
 ### Attachment
@@ -45,12 +45,10 @@ The three buzzes are supposed to be identical, but in this challenge, they are d
 
 
 
-<br>
-
 ### Introduction 
 
 So this was a unique kind of challenge that we came across in UIUCTF 2023 . We were close to solving this problem during the CTF but couldn't complete. However, we were able to solve it after the CTF and our approach seems unique , hence thought of making this writeup.
-<br>
+
 
 ### Analysis
 
