@@ -138,8 +138,8 @@ The function `solver()` below implements exactly that.
 
 ### Decrypting the ciphertext
 
-Every ciphertext contains a pair $(\sum a\_i, \sum b\_i)$.
-Because each $a\_i$ is again a multiple of 256, the inner product that shows up during decryption depends **only** on $s\pmod{4096}$, which we now possess.
+Every ciphertext contains a pair $(\sum a_i, \sum b_i)$.
+Because each $a_i$ is again a multiple of 256, the inner product that shows up during decryption depends **only** on $s\pmod{4096}$, which we now possess.
 
 After subtracting that inner product the remaining value is either
 
