@@ -75,7 +75,7 @@ The challenge outputs a standard **Learning With Errors** public key and an LW
 * number of equations $m = 4n = 2048$
 * “truncation” parameter $c = 8$
   every entry of $A$ is an **exact multiple of** $2^c = 256$
-* noise vector $e\in{0,\dots,399}^m$
+* noise vector $e \in {0,\dots,399}^m $
 
 ```python
 b = A·s + e   (mod q)                  # public part of key
@@ -127,7 +127,7 @@ $$
 
 where each equation is noise‑free.
 
-#### Solving over $\mathbb Z/2^{12}\mathbb Z$
+#### Solving over Z/2^12
 
 Modulo a power of two the ring is not a field, but *odd* numbers are still units.
 A plain Gaussian elimination that always pivots on an odd entry gives the unique solution $s\pmod{4096}$.
