@@ -99,14 +99,14 @@ $$
 Set $q' = q/256 = 4096$.
 After division we still have an LWE instance — *but with dramatically smaller noise*:
 
-* $e \mapsto e' := \lfloor e/256 \rfloor \in{0,1}$.
+* $e \mapsto e' := \lfloor e/256 \rfloor \in \{0,1\}$.
 
 If we could find rows where $e'=0$ the system would become **noise‑free**.
 
 #### Which rows are noise‑free?
 
-The byte $e\_i \bmod 256$ is *visible* in $b\_i$.
-If that byte is $\ge 144$ then $e\_i < 256$ ⇒ $e'\_i=0$.
+The byte $e_i \bmod 256$ is *visible* in $b_i$.
+If that byte is $\ge 144$ then $e_i < 256$ ⇒ $e'_i=0$.
 Roughly 30 % of the rows meet that test — more than enough for a full‑rank $512\times512$ sub‑matrix.
 
 ---
