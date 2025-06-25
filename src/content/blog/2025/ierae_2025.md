@@ -75,7 +75,7 @@ The challenge outputs a standard **Learning With Errors** public key and an LW
 * number of equations $m = 4n = 2048$
 * “truncation” parameter $c = 8$
   every entry of $A$ is an **exact multiple of** $2^c = 256$
-* noise vector $e \in {0,\dots,399}^m $
+* noise vector $e \in \{0,\dots,399\}^m $
 
 ```python
 b = A·s + e   (mod q)                  # public part of key
@@ -138,7 +138,7 @@ The function `solver()` below implements exactly that.
 
 ### Decrypting the ciphertext
 
-Every ciphertext contains a pair $(\sum a\_i,; \text{sum }b\_i)$.
+Every ciphertext contains a pair $(\sum a\_i, \sum b\_i)$.
 Because each $a\_i$ is again a multiple of 256, the inner product that shows up during decryption depends **only** on $s\pmod{4096}$, which we now possess.
 
 After subtracting that inner product the remaining value is either
