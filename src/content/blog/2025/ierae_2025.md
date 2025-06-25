@@ -144,7 +144,7 @@ Because each $a\_i$ is again a multiple of 256, the inner product that shows up 
 After subtracting that inner product the remaining value is either
 
 * close to $0$  or
-* close to $q/2 = 524,288$,
+* close to $q/2 = 2^{20}/{2} = 524288 $
 
 with an error bounded by $\le |S|·399 \ll q/4$.
 A single comparison therefore recovers each plaintext bit with certainty.
