@@ -13,76 +13,97 @@ interface Props {
   entry: CollectionEntry<'blog'>
 }
 
-const { entry } = Astro.props
+const { entry }     = Astro.props
+const authors       = await parseAuthors(entry.data.authors ?? [])
 const formattedDate = formatDate(entry.data.date)
-const readTime = readingTime(entry.body!)
-const authors = await parseAuthors(entry.data.authors ?? [])
+const readTime      = readingTime(entry.body!)
+
+// ────────────────────────────────────────────────────────────────
+// Use front-matter `image` (recommended) or swap in your own fallback.
+const thumbnailSrc  = entry.data.image ?? null
+const cardHasThumb  = Boolean(thumbnailSrc)
+
+// ― sizing tokens (Tailwind) ―
+const THUMB_MOBILE  = 'w-20 h-20'       // 5 rem (80 px)
+const THUMB_DESKTOP = 'sm:w-24 sm:h-24' // 6 rem (96 px)
+
+// Card min-height: top padding (1 rem) + thumb + bottom padding (1 rem)
+const CARD_MINH     = 'min-h-28 sm:min-h-32' // 7 rem / 8 rem
+
+// Left padding for text so it never overlaps the thumb
+const TEXT_PADDING  = 'pl-28 sm:pl-32'       // 7 rem / 8 rem
 ---
 
 <div
-  class="hover:bg-secondary/50 rounded-xl border p-4 transition-colors duration-300 ease-in-out"
+  class={`hover:bg-secondary/50 relative rounded-xl border p-4
+          transition-colors duration-300 ease-in-out
+          ${cardHasThumb ? CARD_MINH : ''}`}
 >
+  {cardHasThumb && (
+    <div
+      class={`absolute top-4 left-4 overflow-hidden rounded-md
+              ${THUMB_MOBILE} ${THUMB_DESKTOP} shrink-0`}
+    >
+      <Image
+        src={thumbnailSrc}
+        alt={entry.data.title}
+        width={400}
+        height={400}
+        loading="lazy"
+        class="h-full w-full object-cover"
+      />
+    </div>
+  )}
+
   <Link
     href={`/${entry.collection}/${entry.id}`}
-    class="flex flex-col gap-4 sm:flex-row"
+    class={`flex flex-col gap-4 transition-colors duration-300 ease-in-out
+            ${cardHasThumb ? TEXT_PADDING : ''}`}
   >
-    {
-      entry.data.image && (
-        <div class="max-w-3xs sm:shrink-0">
-          <Image
-            src={entry.data.image}
-            alt={entry.data.title}
-            width={1200}
-            height={630}
-            class="object-cover"
-          />
-        </div>
-      )
-    }
-
-    <div class="grow">
-      <h3 class="mb-1 text-lg font-medium">{entry.data.title}</h3>
-      <p class="text-muted-foreground mb-2 text-sm">{entry.data.description}</p>
+    <!-- ──────── TEXT BLOCK ──────── -->
+    <div class="grow grid gap-y-1 sm:grid-cols-[1fr_auto] sm:gap-x-6">
+      <!-- Row 1 → title | meta -->
+      <h3 class="text-lg font-medium leading-tight">{entry.data.title}</h3>
 
       <div
-        class="text-muted-foreground mb-2 flex flex-wrap items-center gap-x-2 text-xs"
+        class="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground
+               sm:justify-end sm:whitespace-nowrap"
       >
-        {
-          authors.length > 0 && (
-            <>
-              {authors.map((author) => (
-                <div class="flex items-center gap-x-1.5">
-                  <AvatarComponent
-                    client:load
-                    src={author.avatar}
-                    alt={author.name}
-                    fallback={author.name[0]}
-                    className="size-5 rounded-full"
-                  />
-                  <span>{author.name}</span>
-                </div>
-              ))}
-              <Separator orientation="vertical" className="h-4!" />
-            </>
-          )
-        }
+        {authors.length > 0 && (
+          <>
+            {authors.map((author) => (
+              <div class="flex items-center gap-x-1.5">
+                <AvatarComponent
+                  client:load
+                  src={author.avatar}
+                  alt={author.name}
+                  fallback={author.name[0]}
+                  className="size-5 rounded-full"
+                />
+                <span>{author.name}</span>
+              </div>
+            ))}
+            <Separator orientation="vertical" className="h-4!" />
+          </>
+        )}
         <span>{formattedDate}</span>
         <Separator orientation="vertical" className="h-4!" />
         <span>{readTime}</span>
       </div>
 
-      {
-        entry.data.tags && (
-          <div class="flex flex-wrap gap-2">
-            {entry.data.tags.map((tag) => (
-              <Badge variant="secondary" className="flex items-center gap-x-1">
-                <Icon name="lucide:hash" class="size-3" />
-                {tag}
-              </Badge>
-            ))}
-          </div>
-        )
-      }
+      <!-- Row 2 → description | tags -->
+      <p class="text-muted-foreground text-sm">{entry.data.description}</p>
+
+      {entry.data.tags && (
+        <div class="flex flex-wrap justify-end gap-2 sm:gap-1">
+          {entry.data.tags.map((tag) => (
+            <Badge variant="secondary" className="flex items-center gap-x-1">
+              <Icon name="lucide:hash" class="size-3" />
+              {tag}
+            </Badge>
+          ))}
+        </div>
+      )}
     </div>
   </Link>
 </div>
