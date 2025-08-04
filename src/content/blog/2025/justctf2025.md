@@ -442,11 +442,6 @@ We publish a package `solution::solution` with:
 1. an `init` creating a new regulated currency `SOLUTION` and minting 1 coin to ourselves; and
 2. a `solve` that moves the forbidden `Coin<FUEL_CELL>` into the capsule while also including our benign `Coin<SOLUTION>` in the same transaction (to trigger the early exit).
 
-
-```move
-
-```
-
 > Notes
 >
 > * The one‑time witness name (`SOLUTION`) matches the module name upper‑case.
