@@ -18,20 +18,15 @@ const authors       = await parseAuthors(entry.data.authors ?? [])
 const formattedDate = formatDate(entry.data.date)
 const readTime      = readingTime(entry.body!)
 
-// ────────────────────────────────────────────────────────────────
-// Use front-matter `image` (recommended) or swap in your own fallback.
-const thumbnailSrc  = entry.data.image ?? null
-const cardHasThumb  = Boolean(thumbnailSrc)
+// front-matter image (or add your own fallback logic)
+const thumbnailSrc  = entry.data.image
+const cardHasThumb  = !!thumbnailSrc
 
-// ― sizing tokens (Tailwind) ―
-const THUMB_MOBILE  = 'w-20 h-20'       // 5 rem (80 px)
-const THUMB_DESKTOP = 'sm:w-24 sm:h-24' // 6 rem (96 px)
-
-// Card min-height: top padding (1 rem) + thumb + bottom padding (1 rem)
-const CARD_MINH     = 'min-h-28 sm:min-h-32' // 7 rem / 8 rem
-
-// Left padding for text so it never overlaps the thumb
-const TEXT_PADDING  = 'pl-28 sm:pl-32'       // 7 rem / 8 rem
+// sizing tokens
+const THUMB_MOBILE  = 'w-20 h-20'         // 5 rem
+const THUMB_DESKTOP = 'sm:w-24 sm:h-24'   // 6 rem
+const CARD_MINH     = 'min-h-28 sm:min-h-32'
+const TEXT_PADDING  = 'pl-28 sm:pl-32'
 ---
 
 <div
@@ -60,7 +55,7 @@ const TEXT_PADDING  = 'pl-28 sm:pl-32'       // 7 rem / 8 rem
     class={`flex flex-col gap-4 transition-colors duration-300 ease-in-out
             ${cardHasThumb ? TEXT_PADDING : ''}`}
   >
-    <!-- ──────── TEXT BLOCK ──────── -->
+    <!-- ───── TEXT BLOCK ───── -->
     <div class="grow grid gap-y-1 sm:grid-cols-[1fr_auto] sm:gap-x-6">
       <!-- Row 1 → title | meta -->
       <h3 class="text-lg font-medium leading-tight">{entry.data.title}</h3>
